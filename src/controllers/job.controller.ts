@@ -1,15 +1,13 @@
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import { query } from "../lib/db";
 
 // GET /api/jobs
 export async function getAllJobs(_req: Request, res: Response): Promise<void> {
   try {
-    const jobs = await prisma.job.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const result = await query('SELECT * FROM "Job" ORDER BY "createdAt" DESC');
     res.status(200).json({
       success: true,
-      data: jobs,
+      data: result.rows,
       message: "Jobs retrieved successfully",
     });
   } catch {
@@ -25,7 +23,8 @@ export async function getJobById(req: Request, res: Response): Promise<void> {
       res.status(400).json({ success: false, message: "Invalid job ID" });
       return;
     }
-    const job = await prisma.job.findUnique({ where: { id } });
+    const result = await query('SELECT * FROM "Job" WHERE id = $1', [id]);
+    const job = result.rows[0];
     if (!job) {
       res.status(404).json({ success: false, message: "Job not found" });
       return;
@@ -43,19 +42,14 @@ export async function getJobById(req: Request, res: Response): Promise<void> {
 // POST /api/jobs
 export async function createJob(req: Request, res: Response): Promise<void> {
   try {
-    const { title, company, location, category, description } = req.body as {
-      title: string;
-      company: string;
-      location: string;
-      category: string;
-      description: string;
-    };
-    const job = await prisma.job.create({
-      data: { title, company, location, category, description },
-    });
+    const { title, company, location, category, description } = req.body;
+    const result = await query(
+      'INSERT INTO "Job" (title, company, location, category, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title, company, location, category, description]
+    );
     res.status(201).json({
       success: true,
-      data: job,
+      data: result.rows[0],
       message: "Job created successfully",
     });
   } catch {
@@ -71,12 +65,11 @@ export async function deleteJob(req: Request, res: Response): Promise<void> {
       res.status(400).json({ success: false, message: "Invalid job ID" });
       return;
     }
-    const existing = await prisma.job.findUnique({ where: { id } });
-    if (!existing) {
+    const result = await query('DELETE FROM "Job" WHERE id = $1 RETURNING *', [id]);
+    if (result.rowCount === 0) {
       res.status(404).json({ success: false, message: "Job not found" });
       return;
     }
-    await prisma.job.delete({ where: { id } });
     res.status(200).json({
       success: true,
       data: null,

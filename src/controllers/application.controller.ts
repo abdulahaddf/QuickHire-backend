@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import { query } from "../lib/db";
 
 // POST /api/applications
 export async function createApplication(
@@ -15,25 +15,20 @@ export async function createApplication(
       return;
     }
 
-    const job = await prisma.job.findUnique({ where: { id: jobIdNum } });
-    if (!job) {
+    const jobCheck = await query('SELECT id FROM "Job" WHERE id = $1', [jobIdNum]);
+    if (jobCheck.rowCount === 0) {
       res.status(404).json({ success: false, message: "Job not found" });
       return;
     }
 
-    const application = await prisma.application.create({
-      data: {
-        jobId: jobIdNum,
-        name,
-        email,
-        resumeLink,
-        coverNote: coverNote || null,
-      },
-    });
+    const result = await query(
+      'INSERT INTO "Application" ("jobId", name, email, "resumeLink", "coverNote") VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [jobIdNum, name, email, resumeLink, coverNote || null]
+    );
 
     res.status(201).json({
       success: true,
-      data: application,
+      data: result.rows[0],
       message: "Application submitted successfully",
     });
   } catch (error) {
