@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 
 // GET /api/jobs
-export async function getAllJobs(req: Request, res: Response): Promise<void> {
+export async function getAllJobs(_req: Request, res: Response): Promise<void> {
   try {
     const jobs = await prisma.job.findMany({
       orderBy: { createdAt: "desc" },
@@ -12,18 +12,15 @@ export async function getAllJobs(req: Request, res: Response): Promise<void> {
       data: jobs,
       message: "Jobs retrieved successfully",
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  } catch {
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
 
 // GET /api/jobs/:id
 export async function getJobById(req: Request, res: Response): Promise<void> {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) {
       res.status(400).json({ success: false, message: "Invalid job ID" });
       return;
@@ -38,7 +35,7 @@ export async function getJobById(req: Request, res: Response): Promise<void> {
       data: job,
       message: "Job retrieved successfully",
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
@@ -46,7 +43,13 @@ export async function getJobById(req: Request, res: Response): Promise<void> {
 // POST /api/jobs
 export async function createJob(req: Request, res: Response): Promise<void> {
   try {
-    const { title, company, location, category, description } = req.body;
+    const { title, company, location, category, description } = req.body as {
+      title: string;
+      company: string;
+      location: string;
+      category: string;
+      description: string;
+    };
     const job = await prisma.job.create({
       data: { title, company, location, category, description },
     });
@@ -55,7 +58,7 @@ export async function createJob(req: Request, res: Response): Promise<void> {
       data: job,
       message: "Job created successfully",
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
@@ -63,7 +66,7 @@ export async function createJob(req: Request, res: Response): Promise<void> {
 // DELETE /api/jobs/:id
 export async function deleteJob(req: Request, res: Response): Promise<void> {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) {
       res.status(400).json({ success: false, message: "Invalid job ID" });
       return;
@@ -79,7 +82,7 @@ export async function deleteJob(req: Request, res: Response): Promise<void> {
       data: null,
       message: "Job deleted successfully",
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }

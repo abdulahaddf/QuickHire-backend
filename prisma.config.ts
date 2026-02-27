@@ -1,12 +1,11 @@
-import { defineConfig } from "prisma/config";
 import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
   earlyAccess: true,
   schema: "./prisma/schema.prisma",
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL!,
-    },
+  datasource: {
+    // For Supabase: CLI uses this URL for migrations -> use DIRECT_URL (port 5432)
+    url: env("DIRECT_URL"),
   },
 });
