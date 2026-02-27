@@ -42,10 +42,12 @@ export async function getJobById(req: Request, res: Response): Promise<void> {
 // POST /api/jobs
 export async function createJob(req: Request, res: Response): Promise<void> {
   try {
-    const { title, company, location, category, description } = req.body;
+    const { title, company, logoUrl, location, category, description } = req.body;
+    const finalLogoUrl = logoUrl || "/Company/talkit 1.png"; // Use generic logo if not provided
+
     const result = await query(
-      'INSERT INTO "Job" (title, company, location, category, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [title, company, location, category, description]
+      'INSERT INTO "Job" (title, company, "logoUrl", location, category, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [title, company, finalLogoUrl, location, category, description]
     );
     res.status(201).json({
       success: true,
