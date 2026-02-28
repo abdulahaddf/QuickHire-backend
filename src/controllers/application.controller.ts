@@ -1,6 +1,25 @@
 import { Request, Response } from "express";
 import { query } from "../lib/db";
 
+// GET /api/applications
+export async function getAllApplications(_req: Request, res: Response): Promise<void> {
+  try {
+    const result = await query(
+      `SELECT a.*, j.title as "jobTitle", j.company as "jobCompany"
+       FROM "Application" a
+       LEFT JOIN "Job" j ON a."jobId" = j.id
+       ORDER BY a."createdAt" DESC`
+    );
+    res.status(200).json({
+      success: true,
+      data: result.rows,
+      message: "Applications retrieved successfully",
+    });
+  } catch {
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
 // POST /api/applications
 export async function createApplication(
   req: Request,
